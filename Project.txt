@@ -1,0 +1,236 @@
+import java.util.*;
+
+class Process {
+    int pid;
+    int arrivalTime;
+    int burstTime;
+    int priority;
+    int waitingTime;
+    int turnaroundTime;
+
+    public Process(int pid, int arrivalTime, int burstTime, int priority) {
+        this.pid = pid;
+        this.arrivalTime = arrivalTime;
+        this.burstTime = burstTime;
+        this.priority = priority;
+    }
+
+    @Override
+    public String toString() {
+        return "PID: " + pid +
+                ", AT: " + arrivalTime +
+                ", BT: " + burstTime +
+                ", Priority: " + priority;
+    }
+}
+
+public class CPUScheduler {
+
+    static ArrayList<Process> processes = new ArrayList<>();
+    static HashMap<Integer, Process> processMap = new HashMap<>();
+    static List<String> ganttChart = new ArrayList<>();
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        while (true) {
+
+            System.out.println("\n===== CPU PROCESS SCHEDULER =====");
+            System.out.println("1. Add Process");
+            System.out.println("2. View Processes");
+            System.out.println("3. FCFS Scheduling");
+            System.out.println("4. Priority Scheduling");
+            System.out.println("5. Search Process");
+            System.out.println("6. Exit");
+            System.out.print("Enter Choice: ");
+
+            int choice = sc.nextInt();
+
+            switch (choice) {
+
+                case 1:
+                    addProcess(sc);
+                    break;
+
+                case 2:
+                    viewProcesses();
+                    break;
+
+                case 3:
+                    fcfsScheduling();
+                    break;
+
+                case 4:
+                    priorityScheduling();
+                    break;
+
+                case 5:
+                    searchProcess(sc);
+                    break;
+
+                case 6:
+                    System.out.println("Program Ended.");
+                    return;
+
+                default:
+                    System.out.println("Invalid Choice!");
+            }
+        }
+    }
+
+    static void addProcess(Scanner sc) {
+
+        System.out.print("Enter Process ID: ");
+        int pid = sc.nextInt();
+
+        System.out.print("Enter Arrival Time: ");
+        int at = sc.nextInt();
+
+        System.out.print("Enter Burst Time: ");
+        int bt = sc.nextInt();
+
+        System.out.print("Enter Priority: ");
+        int pr = sc.nextInt();
+
+        Process p = new Process(pid, at, bt, pr);
+
+        processes.add(p);
+        processMap.put(pid, p);
+
+        System.out.println("Process Added Successfully!");
+    }
+
+    static void viewProcesses() {
+
+        if (processes.isEmpty()) {
+            System.out.println("No Processes Available.");
+            return;
+        }
+
+        for (Process p : processes) {
+            System.out.println(p);
+        }
+    }
+
+    static void searchProcess(Scanner sc) {
+
+        System.out.print("Enter PID to Search: ");
+        int pid = sc.nextInt();
+
+        if (processMap.containsKey(pid)) {
+            System.out.println(processMap.get(pid));
+        } else {
+            System.out.println("Process Not Found!");
+        }
+    }
+
+    static void fcfsScheduling() {
+
+        if (processes.isEmpty()) {
+            System.out.println("No Processes Available.");
+            return;
+        }
+
+        Queue<Process> readyQueue = new LinkedList<>();
+
+        ArrayList<Process> temp = new ArrayList<>(processes);
+
+        temp.sort(Comparator.comparingInt(p -> p.arrivalTime));
+
+        readyQueue.addAll(temp);
+
+        ganttChart.clear();
+
+        int currentTime = 0;
+        double totalWT = 0;
+        double totalTAT = 0;
+
+        System.out.println("\n===== FCFS SCHEDULING =====");
+
+        while (!readyQueue.isEmpty()) {
+
+            Process p = readyQueue.poll();
+
+            if (currentTime < p.arrivalTime)
+                currentTime = p.arrivalTime;
+
+            p.waitingTime = currentTime - p.arrivalTime;
+
+            currentTime += p.burstTime;
+
+            p.turnaroundTime = p.waitingTime + p.burstTime;
+
+            totalWT += p.waitingTime;
+            totalTAT += p.turnaroundTime;
+
+            ganttChart.add("P" + p.pid);
+
+            System.out.println(
+                    "P" + p.pid +
+                            " WT=" + p.waitingTime +
+                            " TAT=" + p.turnaroundTime);
+        }
+
+        System.out.println("\nExecution Sequence:");
+        System.out.println(ganttChart);
+
+        System.out.println("Average Waiting Time = "
+                + (totalWT / processes.size()));
+
+        System.out.println("Average Turnaround Time = "
+                + (totalTAT / processes.size()));
+    }
+
+    static void priorityScheduling() {
+
+        if (processes.isEmpty()) {
+            System.out.println("No Processes Available.");
+            return;
+        }
+
+        PriorityQueue<Process> pq =
+                new PriorityQueue<>(
+                        Comparator.comparingInt(p -> p.priority));
+
+        pq.addAll(processes);
+
+        ganttChart.clear();
+
+        int currentTime = 0;
+        double totalWT = 0;
+        double totalTAT = 0;
+
+        System.out.println("\n===== PRIORITY SCHEDULING =====");
+
+        while (!pq.isEmpty()) {
+
+            Process p = pq.poll();
+
+            p.waitingTime = currentTime;
+
+            currentTime += p.burstTime;
+
+            p.turnaroundTime = p.waitingTime + p.burstTime;
+
+            totalWT += p.waitingTime;
+            totalTAT += p.turnaroundTime;
+
+            ganttChart.add("P" + p.pid);
+
+            System.out.println(
+                    "P" + p.pid +
+                            " WT=" + p.waitingTime +
+                            " TAT=" + p.turnaroundTime);
+        }
+
+        System.out.println("\nExecution Sequence:");
+        System.out.println(ganttChart);
+
+        System.out.println("Average Waiting Time = "
+                + (totalWT / processes.size()));
+
+        System.out.println("Average Turnaround Time = "
+                + (totalTAT / processes.size()));
+    }
+}
